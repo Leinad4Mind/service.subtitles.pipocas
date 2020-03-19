@@ -83,40 +83,63 @@ def xbmc_walk(DIR):
     return LIST
 
 
-def extract_all_libarchive(archive_file, directory_to, extension):
+def extract_all_rar(archive_file, directory_to, archive_type):
     overall_success = True
     files_out = list()
-    if 'rar://' in archive_file:
-        archive_path = archive_file
-    if extension == "zip":
-        archive_path = 'archive://%(archive_file)s' % {'archive_file': urllib.quote_plus(xbmc.translatePath(archive_file))}
+    if archive_type != '':
+        archive_path = (archive_type + '%s') % urllib.quote_plus(xbmc.translatePath(archive_file))
     else:
-        archive_path = 'rar://%(archive_file)s' % {'archive_file': urllib.quote_plus(xbmc.translatePath(archive_file))}
+      archive_path = archive_file
 
-    dirs_in_archive, files_in_archive = xbmcvfs.listdir(archive_path)
+    log('-----------------------------------------------------------')
+    log('---- Extracting archive URL: %s' % archive_path)
+    log('---- To directory: %s' % directory_to)
+    
+    log('---- Calling xbmcvfs.listdir...')
+    (dirs_in_archive, files_in_archive) = xbmcvfs.listdir(archive_path)
     for ff in files_in_archive:
-        # Windows unexpectedly requires a forward slash in the path
-        file_from = os.path.join(archive_path, ff).replace('\\', '/')
-        success = xbmcvfs.copy(file_from, os.path.join(
-            xbmc.translatePath(directory_to), ff))  # Attempt to move the file first
-        if not success:
-            xbmc.log(msg='Error extracting file %(ff)s from archive %(archive_file)s' % {'ff': ff, 'archive_file': archive_file}, level=xbmc.LOGDEBUG)
+        log('---- File found in archive: %s' % ff)
+        url_from = os.path.join(archive_path, ff).replace('\\','/')  #Windows unexpectedly requires a forward slash in the path
+        log('---- URL from: %s' % url_from)
+        file_to = os.path.join(xbmc.translatePath(directory_to),ff)
+        log('---- File to: %s' % file_to) 
+        copy_success = xbmcvfs.copy(url_from, file_to) #Attempt to move the file first
+        log('---- Calling xbmcvfs.copy...')
+
+        if not copy_success:
+            log('---- Copy ERROR!!!!!')
             overall_success = False
         else:
-            xbmc.log(msg='Extracted file %(ff)s from archive %(archive_file)s' % {'ff': ff, 'archive_file': archive_file}, level=xbmc.LOGDEBUG)
-            files_out.append(os.path.join(
-                xbmc.translatePath(directory_to), ff))
+            log('---- Copy OK')
+            files_out.append(file_to)
+
     for dd in dirs_in_archive:
-        if xbmcvfs.mkdir(os.path.join(xbmc.translatePath(directory_to), dd)):
-            xbmc.log(msg='Created folder %(dd)s for archive %(archive_file)s' % {'dd': os.path.join(xbmc.translatePath(directory_to), dd, ''), 'archive_file': archive_file}, level=xbmc.LOGDEBUG)
-            files_out2, success2 = extract_all_libarchive(os.path.join(archive_path, dd, '').replace('\\', '/'), os.path.join(directory_to, dd), extension)
+        log('---- Directory found in archive: %s' % dd)
+        
+        dir_to_create = os.path.join(xbmc.translatePath(directory_to),dd)
+        log('---- Directory to create: %s' % dir_to_create)
+        
+        log('---- Calling xbmcvfs.mkdir...')
+        mkdir_success = xbmcvfs.mkdir(dir_to_create)
+
+        if mkdir_success:
+
+            log('---- Mkdir OK')
+            
+            dir_inside_archive_url = os.path.join(archive_path,dd,'').replace('\\','/')
+            log('---- Directory inside archive URL: %s' % dir_inside_archive_url)
+            
+            log('---- Calling extractArchiveToFolder...')
+            files_out2, success2 = extract_all_rar(dir_inside_archive_url, os.path.join(directory_to,dd), archive_type)
+            
             if success2:
                 files_out = files_out + files_out2
             else:
                 overall_success = False
+
         else:
             overall_success = False
-            xbmc.log(msg='Unable to create the folder %(dir_from)s for libarchive extraction' % {'dir_from': os.path.join(xbmc.translatePath(directory_to), dd)}, level=xbmc.LOGDEBUG)
+            log('---- Mkdir ERROR!!!!!')
 
     return files_out, overall_success
 

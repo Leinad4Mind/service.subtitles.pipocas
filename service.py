@@ -440,17 +440,16 @@ def Download(id, filename):
         log(u"Checking archive type")
         if thecontent[:4] == 'Rar!':
             extension = ".rar"
-            typeid = 'rar'
+            archive_type = 'rar://'
             packed = True
             log(u"Discovered RAR Archive")
         elif thecontent[:2] == 'PK':
             extension = ".zip"
-            typeid = 'zip'
+            archive_type = 'archive://'
             packed = True
             log(u"Discovered ZIP Archive")
         else:
             extension = ".srt"
-            typeid = 'archive'
             packed = False
             log(u"Discovered a non-archive file")
 
@@ -463,37 +462,16 @@ def Download(id, filename):
                 local_file_handle.write(thecontent)
             local_file_handle.close()
 
-            translated_archive_url = (typeid + '://%s') % urllib.quote_plus(xbmc.translatePath(local_tmp_file))
-
-            myfile = xbmcvfs.File(local_tmp_file, "rb")
-            myfile.seek(0, 0)
-            if myfile.read(1) == 'R':
-                typeid = "rar"
-                packed = True
-                log(u"Discovered RAR Archive")
-            else:
-                myfile.seek(0, 0)
-                if myfile.read(1) == 'P':
-                    typeid = "zip"
-                    packed = True
-                    log(u"Discovered ZIP Archive")
-                else:
-                    typeid = "srt"
-                    packed = False
-                    log(u"Discovered a non-archive file")
-            myfile.close()
-
             log(u"Saving to %s" % local_tmp_file)
         except:
             log(u"Failed to save subtitle to %s" % local_tmp_file)
 
         if packed:
             time.sleep(2)
-            extractedFileList, success = extract_all_libarchive(translated_archive_url, _temp, typeid)
+            extractedFileList, success = extract_all_rar(local_tmp_file, _temp, archive_type)
 
-            files = xbmc_walk(_temp)
             temp = []
-            for file in files:
+            for file in extractedFileList:
                 sub = urllib.unquote_plus(file)
                 sub, ext = os.path.splitext(os.path.basename(file))
                 temp.append([file, sub, ext])
