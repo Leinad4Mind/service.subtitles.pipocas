@@ -57,7 +57,7 @@ def geturl(url):
 def enable_rar():
 
     def is_rar_enabled():
-        q = '{"jsonrpc": "2.0", "method": "Addons.GetAddonDetails", "params": {"addonid": "vfs.libarchive", "properties": ["enabled"]}, "id": 0 }'
+        q = '{"jsonrpc": "2.0", "method": "Addons.GetAddonDetails", "params": {"addonid": "vfs.rar", "properties": ["enabled"]}, "id": 0 }'
         r = json.loads(xbmc.executeJSONRPC(q))
         log(xbmc.executeJSONRPC(q))
         if r.has_key("result") and r["result"].has_key("addon"):
@@ -65,7 +65,7 @@ def enable_rar():
         return True
 
     if not is_rar_enabled():
-        xbmc.executeJSONRPC('{"jsonrpc": "2.0", "method": "Addons.SetAddonEnabled", "params": {"addonid": "vfs.libarchive", "enabled": true} }')
+        xbmc.executeJSONRPC('{"jsonrpc": "2.0", "method": "Addons.SetAddonEnabled", "params": {"addonid": "vfs.rar", "enabled": true} }')
         time.sleep(1)
         if not is_rar_enabled():
             ok = _dialog.ok(_language(32012).encode("utf-8"), _language(32013).encode("utf-8"), " ", _language(32014).encode("utf-8"))
