@@ -250,8 +250,6 @@ def Search(item):
     # use item["some_property"] that was set earlier
     # once done, set xbmcgui.ListItem() below and pass it to xbmcplugin.addDirectoryItem()
     # CHECKING FOR ANYTHING IN THE USERNAME AND PASSWORD, IF NULL IT STOPS THE SCRIPT WITH A WARNING
-    username = _addon.getSetting('USERNAME')
-    password = _addon.getSetting('PASSWORD')
     if username == '' or password == '':
         xbmcplugin.endOfDirectory(int(sys.argv[1]))
         if username == '' and password != '':
@@ -390,16 +388,6 @@ def Search(item):
 
 
 def Download(id, filename):
-    """Called when subtitle download request from XBMC."""
-    # Cleanup temp dir, we recomend you download/unzip your subs in temp folder and
-    # pass that to XBMC to copy and activate
-    if os.path.isdir(_temp):
-        shutil.rmtree(_temp)
-    xbmcvfs.mkdirs(_temp)
-    if not os.path.isdir(_temp):
-        xbmcvfs.mkdir(_temp)
-
-    subtitles_list = []
 
     url = main_url + 'login'
     download = main_url + 'legendas/download/' + id
@@ -434,15 +422,19 @@ def Download(id, filename):
     content = sessionPipocasTv.get(download)
     if not content.ok:
         return []
+
     # If user is not registered or User\Pass is misspelled it will generate an error message and break the script execution!
     thecontent = content.content
+
     if 'Cria uma conta' in thecontent:
         xbmcplugin.endOfDirectory(int(sys.argv[1]))
         #xbmc.executebuiltin(('Notification(%s,%s,%d)' % (_scriptname , _language(32019).encode('utf8'),5000)))
         _dialog.notification(_scriptname, _language(32019).encode('utf8'), xbmcgui.NOTIFICATION_ERROR)
 
     if thecontent is not None:
+        subtitles_list = []
         random = uuid.uuid4().hex
+        cleanDirectory(_temp)
 
         # Check archive type (rar/zip/else) through the file header (rar=Rar!, zip=PK)
         log(u"Checking archive type")
