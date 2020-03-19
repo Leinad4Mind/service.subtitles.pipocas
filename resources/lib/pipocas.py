@@ -88,6 +88,7 @@ def extract_all_rar(archive_file, directory_to, archive_type):
     files_out = list()
     if archive_type != '':
         archive_path = (archive_type + '%s') % urllib.quote_plus(xbmc.translatePath(archive_file))
+        archive_path_temp = ('archive://%s') % urllib.quote_plus(xbmc.translatePath(archive_file))
     else:
       archive_path = archive_file
 
@@ -96,7 +97,12 @@ def extract_all_rar(archive_file, directory_to, archive_type):
     log('---- To directory: %s' % directory_to)
     
     log('---- Calling xbmcvfs.listdir...')
-    (dirs_in_archive, files_in_archive) = xbmcvfs.listdir(archive_path)
+    try:
+        (dirs_in_archive, files_in_archive) = xbmcvfs.listdir(archive_path)
+    except:
+        (dirs_in_archive, files_in_archive) = xbmcvfs.listdir(archive_path_temp)
+    log('---- xbmcvfs.listdir CALLED...')
+
     for ff in files_in_archive:
         log('---- File found in archive: %s' % ff)
         url_from = os.path.join(archive_path, ff).replace('\\','/')  #Windows unexpectedly requires a forward slash in the path
@@ -116,7 +122,7 @@ def extract_all_rar(archive_file, directory_to, archive_type):
     for dd in dirs_in_archive:
         log('---- Directory found in archive: %s' % dd)
         
-        dir_to_create = os.path.join(xbmc.translatePath(directory_to),dd)
+        dir_to_create = os.path.join(directory_to, dd)
         log('---- Directory to create: %s' % dir_to_create)
         
         log('---- Calling xbmcvfs.mkdir...')
@@ -126,13 +132,13 @@ def extract_all_rar(archive_file, directory_to, archive_type):
 
             log('---- Mkdir OK')
             
-            dir_inside_archive_url = os.path.join(archive_path,dd,'').replace('\\','/')
+            dir_inside_archive_url = archive_path + '/' + dd + '/'
             log('---- Directory inside archive URL: %s' % dir_inside_archive_url)
             
             log('---- Calling extractArchiveToFolder...')
-            files_out2, success2 = extract_all_rar(dir_inside_archive_url, os.path.join(directory_to,dd), archive_type)
+            files_out2, copy_success2 = extract_all_rar(dir_inside_archive_url, dir_to_create, '')
             
-            if success2:
+            if copy_success2:
                 files_out = files_out + files_out2
             else:
                 overall_success = False

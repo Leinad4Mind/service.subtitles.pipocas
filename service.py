@@ -445,11 +445,12 @@ def Download(id, filename):
             log(u"Discovered RAR Archive")
         elif thecontent[:2] == 'PK':
             extension = ".zip"
-            archive_type = 'archive://'
+            archive_type = 'zip://'
             packed = True
             log(u"Discovered ZIP Archive")
         else:
             extension = ".srt"
+            archive_type = ''
             packed = False
             log(u"Discovered a non-archive file")
 
