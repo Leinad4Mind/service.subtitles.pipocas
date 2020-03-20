@@ -84,6 +84,14 @@ def xbmc_walk(DIR):
 
 
 def extract_all_rar(archive_file, directory_to, archive_type):
+    # zip and rar files will (currently) not copy contents with the 'archive://' vfs url.  They will copy if you use the 'zip://' or the 'rar://' url
+    # 7z/bz2/gzip/xz/etc (all the formats that libarchive supports) will copy if you use the 'archive://' url
+    # The contents of an rar/zip/7z etc will correctly be listed using xbmcvfs.listdir using 'archive://' regardless of the format.  
+    # The builtin xbmc.extract does not work with 'archive://', only 'zip://' and 'rar://'
+    log('---- Received Filed - Archive File: %s' % directory_to)
+    log('---- Received Filed - Directory Folder: %s' % archive_file)
+    log('---- Received Filed - Archive Type: %s' % archive_type)
+
     overall_success = True
     files_out = list()
     if archive_type != '':
