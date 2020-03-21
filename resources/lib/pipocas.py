@@ -14,6 +14,7 @@ import xbmc
 import xbmcaddon
 import xbmcgui
 import xbmcvfs
+import archive_tool
 try:
     import simplejson as json
 except:
@@ -88,15 +89,15 @@ def extract_all_rar(archive_file, directory_to, archive_type):
     # 7z/bz2/gzip/xz/etc (all the formats that libarchive supports) will copy if you use the 'archive://' url
     # The contents of an rar/zip/7z etc will correctly be listed using xbmcvfs.listdir using 'archive://' regardless of the format.  
     # The builtin xbmc.extract does not work with 'archive://', only 'zip://' and 'rar://'
-    log('---- Received Filed - Archive File: %s' % directory_to)
-    log('---- Received Filed - Directory Folder: %s' % archive_file)
+    log('---- Received Filed - Archive File: %s' % archive_file)
+    log('---- Received Filed - Directory Folder: %s' % directory_to)
     log('---- Received Filed - Archive Type: %s' % archive_type)
 
     overall_success = True
     files_out = list()
     if archive_type != '':
         archive_path = (archive_type + '%s') % urllib.quote_plus(xbmc.translatePath(archive_file))
-        archive_path_temp = ('archive://%s') % urllib.quote_plus(xbmc.translatePath(archive_file))
+        # archive_path_temp = ('archive://%s') % urllib.quote_plus(xbmc.translatePath(archive_file))
     else:
       archive_path = archive_file
 
@@ -105,57 +106,27 @@ def extract_all_rar(archive_file, directory_to, archive_type):
     log('---- To directory: %s' % directory_to)
     
     log('---- Calling xbmcvfs.listdir...')
-    try:
-        (dirs_in_archive, files_in_archive) = xbmcvfs.listdir(archive_path)
-    except:
-        (dirs_in_archive, files_in_archive) = xbmcvfs.listdir(archive_path_temp)
-    log('---- xbmcvfs.listdir CALLED...')
+    # try:
+    #     (dirs_in_archive, files_in_archive) = xbmcvfs.listdir(archive_path)
+    # except:
+    #     (dirs_in_archive, files_in_archive) = xbmcvfs.listdir(archive_path_temp)
+    # log('---- xbmcvfs.listdir CALLED...')
+    if archive_type == 'rar://':
+        dirs_in_archive = archive_tool.archive_tool(archive_file, directory_to, use_vfs_rar=True) #current archive object using vfs.rar instead of vfs.libarchive
+        xbmc.executeJSONRPC('{ "jsonrpc": "2.0", "method": "Addons.SetAddonEnabled","params":{"addonid": "vfs.libarchive", "enabled": false} }')
+    else:
+        dirs_in_archive = archive_tool.archive_tool(archive_file, directory_to) #Current archive object
+    files_in_archive = dirs_in_archive.list_all() #Lists all files in the archive
+    file_listing_dict = dirs_in_archive.stat_all() #Dict of all files in the archive containing fullpath, filename, file size (extracted)
+    files_extracted, success_of_extraction = dirs_in_archive.extract()  #Extracts all files to directory_out, returns list of files extracted and True/False for extraction success.  Defaults to extract all files in the archive.
+    xbmc.executeJSONRPC('{ "jsonrpc": "2.0", "method": "Addons.SetAddonEnabled","params":{"addonid": "vfs.libarchive", "enabled": true} }')
 
-    for ff in files_in_archive:
-        log('---- File found in archive: %s' % ff)
-        url_from = os.path.join(archive_path, ff).replace('\\','/')  #Windows unexpectedly requires a forward slash in the path
-        log('---- URL from: %s' % url_from)
-        file_to = os.path.join(xbmc.translatePath(directory_to),ff)
-        log('---- File to: %s' % file_to) 
-        copy_success = xbmcvfs.copy(url_from, file_to) #Attempt to move the file first
-        log('---- Calling xbmcvfs.copy...')
+    log('---- files_in_archive: %s' % files_in_archive)
+    log('---- file_listing_dict: %s' % file_listing_dict)
+    log('---- files_extracted: %s' % files_extracted)
+    log('---- success_of_extraction: %s' % success_of_extraction)
 
-        if not copy_success:
-            log('---- Copy ERROR!!!!!')
-            overall_success = False
-        else:
-            log('---- Copy OK')
-            files_out.append(file_to)
-
-    for dd in dirs_in_archive:
-        log('---- Directory found in archive: %s' % dd)
-        
-        dir_to_create = os.path.join(directory_to, dd)
-        log('---- Directory to create: %s' % dir_to_create)
-        
-        log('---- Calling xbmcvfs.mkdir...')
-        mkdir_success = xbmcvfs.mkdir(dir_to_create)
-
-        if mkdir_success:
-
-            log('---- Mkdir OK')
-            
-            dir_inside_archive_url = archive_path + '/' + dd + '/'
-            log('---- Directory inside archive URL: %s' % dir_inside_archive_url)
-            
-            log('---- Calling extractArchiveToFolder...')
-            files_out2, copy_success2 = extract_all_rar(dir_inside_archive_url, dir_to_create, '')
-            
-            if copy_success2:
-                files_out = files_out + files_out2
-            else:
-                overall_success = False
-
-        else:
-            overall_success = False
-            log('---- Mkdir ERROR!!!!!')
-
-    return files_out, overall_success
+    return files_extracted, overall_success
 
 
 def normalizeString(str):
