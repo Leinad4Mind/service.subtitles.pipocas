@@ -1,7 +1,7 @@
-0.18.6 (Leinad4Mind)
+0.18.6 (Thanks to Leinad4Mind)
 - Now only compatible with Kodi 18 and above
 - Works on the fly
-0.17.6 (Leinad4Mind)
+0.17.6 (Thanks to Leinad4Mind)
 - Change versioning
 - Refactor and clean all the code
 - Enhance translations
@@ -10,7 +10,7 @@
 0.1.7
 - Fix unrar solid files
 0.1.6
-- New website design
+- New website design (Thanks to turtuga)
 0.1.5
 - http -> https
 0.1.4
@@ -19,8 +19,8 @@
 - Added new logo of Pipocas.tv
 - Change search language not depend kodi language
 0.1.2
-- Added Debug Mode in configurations for better help to failures (Mafarricos)
-- Code cleanup (Mafarricos)
+- Added Debug Mode in configurations for better help to failures (Thanks to Mafarricos)
+- Code cleanup (Thanks to Mafarricos)
 0.1.1
 - Added a last resort option to search for filename or title, configure in advanced options of the add-on
 0.1.0
